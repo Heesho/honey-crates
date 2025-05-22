@@ -48,14 +48,15 @@ contract Crate is ReentrancyGuard, Ownable, IEntropyConsumer {
     uint256 public constant DEPOSIT_AMOUNT = 1 ether;
     uint256 public constant BASIS_POINTS = 10_000; // 100% = 10,000
     address public constant BGT = 0x656b95E550C07a9ffe548bd4085c72418Ceb1dba;
-    address public constant WBERA = 0x6969696969696969696969696969696969696969;
 
     /*----------  STATE VARIABLES  --------------------------------------*/
 
     IEntropy public entropy;
 
-    address private vaultToken;
-    address private rewardVault;
+    address public immutable rewardToken;
+    address public immutable vaultToken;
+    address public immutable rewardVault;
+
     address public treasury;
     address public developer;
     address public incentives;
@@ -101,12 +102,14 @@ contract Crate is ReentrancyGuard, Ownable, IEntropyConsumer {
     /*----------  FUNCTIONS  --------------------------------------------*/
 
     constructor(
+        address _rewardToken,
         address _treasury,
         address _developer,
         address _incentives,
         address _vaultFactory,
         address _entropy
     ) {
+        rewardToken = _rewardToken;
         treasury = _treasury;
         developer = _developer;
         incentives = _incentives;
@@ -123,11 +126,11 @@ contract Crate is ReentrancyGuard, Ownable, IEntropyConsumer {
         uint256 developerAmount = balance * 10 / 100;
         uint256 treasuryAmount = balance - incentivesAmount - developerAmount;
 
-        IWBERA(WBERA).deposit{value: balance}();
+        IWBERA(rewardToken).deposit{value: balance}();
         
-        IERC20(WBERA).safeTransfer(developer, developerAmount);
-        IERC20(WBERA).safeTransfer(treasury, treasuryAmount);
-        IERC20(WBERA).safeTransfer(incentives, incentivesAmount);
+        IERC20(rewardToken).safeTransfer(developer, developerAmount);
+        IERC20(rewardToken).safeTransfer(treasury, treasuryAmount);
+        IERC20(rewardToken).safeTransfer(incentives, incentivesAmount);
 
         emit Crate__Distributed(developerAmount, treasuryAmount, incentivesAmount);
     }
@@ -164,7 +167,7 @@ contract Crate is ReentrancyGuard, Ownable, IEntropyConsumer {
         uint256 bgtReward = IRewardVault(rewardVault).getReward(address(this), address(this));
         if (bgtReward > 0) {
             IBGT(BGT).redeem(address(this), bgtReward);
-            IWBERA(WBERA).deposit{value: bgtReward}();
+            IWBERA(rewardToken).deposit{value: bgtReward}();
         }
     }
 
@@ -179,12 +182,12 @@ contract Crate is ReentrancyGuard, Ownable, IEntropyConsumer {
         if (account == address(0)) revert Crate__InvalidSequence();
 
         uint256 randomValue = uint256(randomNumber) % maxIndex;
-        uint256 balance = IERC20(WBERA).balanceOf(address(this));
+        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
         uint256 rewardPercent = index_RewardRate[randomValue];
         uint256 reward = (balance * rewardPercent) / BASIS_POINTS;
 
         if (reward > 0) {
-            IERC20(WBERA).safeTransfer(account, reward);
+            IERC20(rewardToken).safeTransfer(account, reward);
         }
 
         delete sequence_Account[sequenceNumber];
@@ -194,12 +197,12 @@ contract Crate is ReentrancyGuard, Ownable, IEntropyConsumer {
     function mockCallback(address account, bytes32 randomValue) internal {
 
         uint256 randomIndex = uint256(randomValue) % maxIndex;
-        uint256 balance = IERC20(WBERA).balanceOf(address(this));
+        uint256 balance = IERC20(rewardToken).balanceOf(address(this));
         uint256 rewardPercent = index_RewardRate[randomIndex];
         uint256 reward = (balance * rewardPercent) / BASIS_POINTS;
 
         if (reward > 0) {
-            IERC20(WBERA).safeTransfer(account, reward);
+            IERC20(rewardToken).safeTransfer(account, reward);
         }
 
         emit Crate__OpenResult(account, 0, randomIndex, rewardPercent, reward);
