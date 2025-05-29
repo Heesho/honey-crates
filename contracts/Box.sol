@@ -3,8 +3,11 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 contract Box is ERC721Enumerable, Ownable {
+    using Address for address payable;
+
     string private _baseTokenURI;
 
     /*----------  CONSTANTS  --------------------------------------------*/
@@ -62,9 +65,9 @@ contract Box is ERC721Enumerable, Ownable {
         uint256 developerAmount = balance * 10 / 100;
         uint256 treasuryAmount = balance - incentivesAmount - developerAmount;
 
-        payable(treasury).transfer(treasuryAmount);
-        payable(developer).transfer(developerAmount);
-        payable(incentives).transfer(incentivesAmount);
+        payable(treasury).sendValue(treasuryAmount);
+        payable(developer).sendValue(developerAmount);
+        payable(incentives).sendValue(incentivesAmount);
 
         emit Box__Distributed(developerAmount, treasuryAmount, incentivesAmount);
     }
