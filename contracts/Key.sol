@@ -76,14 +76,18 @@ contract Key is ReentrancyGuard, Ownable, IEntropyConsumer {
     error Key__InvalidRewardRate();
     error Key__InvalidArrayLength();
     error Key__InvalidRange();
+    error Key__InvalidIndex();
+    error Key__InvalidToken();
+    error Key__TokenAlreadySet();
 
     /*----------  EVENTS ------------------------------------------------*/
 
     event Key__Initialized();
     event Key__IndexSet(uint256 index, uint256 rate);
+    event Key__IndexTokenSet(uint256 index, address token, uint256 tokenId);
     event Key__MaxIndexSet(uint256 maxIndex);
     event Key__OpenRequest(uint64 sequenceNumber, address player);
-    event Key__OpenResult(address indexed player, uint64 sequenceNumber, uint256 randomValue, uint256 rewardPercent, uint256 reward);
+    event Key__OpenResult(address indexed player, uint64 sequenceNumber, uint256 randomValue, uint256 rewardPercent, uint256 reward, address token, uint256 tokenId);
 
     /*----------  MODIFIERS  --------------------------------------------*/
 
